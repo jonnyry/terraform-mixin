@@ -4,6 +4,8 @@ on:
     branches:
     - main
     - v*
+    tags:
+    - 'v*'
   pull_request:
     branches:
     - main
@@ -25,8 +27,28 @@ jobs:
       run: mage Test
     - name: Cross Compile
       run: mage XBuildAll
-    - name: Publish
-      if: success() && github.event_name != 'PullRequest'
-      env:
-        GITHUB_TOKEN: "${{ secrets.PUBLISH_TOKEN }}"
-      run: mage Publish
+
+# comment out official release mechanism
+      
+    # - name: Publish
+    #   if: success() && github.event_name != 'PullRequest'
+    #   env:
+    #     GITHUB_TOKEN: "${{ secrets.PUBLISH_TOKEN }}"
+    #   run: mage Publish
+
+# add our own bootstrap release mechanism
+
+    - name: List files
+      run: ls -laR
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: success() && startsWith(github.ref, 'refs/tags/v')
+      with:
+        files: |
+          ./bin/mixins/terraform/${{ github.ref_name }}/terraform-darwin-amd64
+          ./bin/mixins/terraform/${{ github.ref_name }}/terraform-darwin-arm64
+          ./bin/mixins/terraform/${{ github.ref_name }}/terraform-linux-amd64
+          ./bin/mixins/terraform/${{ github.ref_name }}/terraform-linux-arm64
+          ./bin/mixins/terraform/${{ github.ref_name }}/terraform-windows-amd64.exe
+          ./bin/mixins/terraform/${{ github.ref_name }}/terraform-windows-arm64.exe
